@@ -1,11 +1,24 @@
-from sklearn.metrics import make_scorer
+import time, datetime
 
-def rmspe(y_true, y_pred):
+import numpy as np
+import skutils
+
+@skutils.score(greater_is_better=False)
+def rmspe(y, y_pred):
     """Root Mean Square Percentage Error
     Details about this function can be found on kaggle 
     https://www.kaggle.com/c/rossmann-store-sales/details/evaluation"""
-    idx = y_true != 0
-    return np.sqrt(np.mean(((y_true[idx] - y_pred[idx]) / y_true[idx]) ** 2))
+    # Convert the values to numpy arrays
+    y, y_pred = np.array(y), np.array(y_pred)
+    # Create a weight vector, and initialize with zeros
+    w = np.zeros(y.shape, dtype=float)
+    # Create a binary maks containing indecies
+    # of all non-zero values 
+    idx = y != 0
+    # Add weights for all non-zero values
+    w[idx] = 1.0 / (y[idx] ** 2)
+    # return the error value
+    return np.sqrt(np.mean(w * (y[idx] - y_pred[idx]) ** 2))
 
-# Create a Scorer
-rmspe_scorer = make_scorer(rmspe, greater_is_better=False)
+def timestamp():
+    return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
