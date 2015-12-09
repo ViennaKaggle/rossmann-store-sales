@@ -1,8 +1,6 @@
 
 # coding: utf-8
 
-# In[1]:
-
 from time import time
 import datetime
 from operator import itemgetter
@@ -12,7 +10,6 @@ import utils
 import data_utils
 
 import matplotlib.pyplot as plt
-get_ipython().magic(u'matplotlib inline')
 
 import numpy as np
 import pandas as pd
@@ -25,21 +22,14 @@ from sklearn.grid_search import RandomizedSearchCV
 import xgboost as xgb
 
 from scipy.stats import randint as sp_randint
+from scipy.stats import uniform as sp_uniform
 
 
-# In[2]:
+print("Loading data sets")
 
 train, test = data_utils.load_transformed_data()
 X_train, y_train = data_utils.get_raw_values(train)
 
-
-# In[3]:
-
-rfr_params = {'n_estimators': 100, 'random_state': 42, 'n_jobs': -1, 'oob_score': False, 'bootstrap': False, 'min_samples_leaf': 6, 'min_samples_split': 40, 'max_features': 13, 'max_depth': 54}
-rfr_params = {'n_estimators': 15, 'random_state': 42, 'n_jobs': -1}
-
-
-# In[4]:
 
 # Utility function to report best scores
 def report(grid_scores, n_top=20):
@@ -54,7 +44,7 @@ def report(grid_scores, n_top=20):
         print("")
 
 
-# In[5]:
+print("Starting RandomizedSearchCV")
 
 n_features = X_train.shape[1]
 model = xgb.XGBRegressor()
@@ -62,16 +52,16 @@ model = xgb.XGBRegressor()
 param_dist = {"objective": ["reg:linear"],
 #              "booster" : ["gbtree"],
 #              "eta": [0.1, 0.3, 0.5, 0.7],
-              "max_depth": sp_randint(1, 2),
-              "subsample": [0.1, 0.3, 0.5, 0.7, 0.9],
-              "colsample_bytree": [0.1, 0.3, 0.5, 0.7, 0.9, 1.0],
+              "max_depth": sp_randint(5, 10),
+              "subsample": sp_uniform(0.1, 0.9),
+              "colsample_bytree": sp_uniform(0.1, 1.0),
               "silent": [1],
               "seed": [42]
              }
 
 # run randomized search
-n_iter_search = 1
-folds = cv.KFold(n=len(y_train), n_folds=5, shuffle=True, random_state=42)
+n_iter_search = 40
+folds = cv.KFold(n=len(y_train), n_folds=2, shuffle=True, random_state=42)
 random_search = RandomizedSearchCV(model,
                                    param_distributions=param_dist,
                                    n_iter=n_iter_search,
@@ -87,8 +77,6 @@ random_search.fit(X_train, y_train)
 print("RandomizedSearchCV took %.2f seconds for %d candidates"
       " parameter settings." % ((time() - start), n_iter_search))
 
-
-# In[6]:
 
 report(random_search.grid_scores_, n_iter_search)
 
