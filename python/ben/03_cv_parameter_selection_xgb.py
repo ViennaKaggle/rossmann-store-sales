@@ -47,12 +47,14 @@ def report(grid_scores, n_top=20):
 print("Starting RandomizedSearchCV")
 
 n_features = X_train.shape[1]
+N_FOLDS = 10
+
 model = xgb.XGBRegressor()
 # specify parameters and distributions to sample from
 param_dist = {"objective": ["reg:linear"],
 #              "booster" : ["gbtree"],
 #              "eta": [0.1, 0.3, 0.5, 0.7],
-              "max_depth": sp_randint(5, 10),
+              "max_depth": sp_randint(10, 30),
               "subsample": sp_uniform(0.1, 0.9),
               "colsample_bytree": sp_uniform(0.1, 1.0),
               "silent": [1],
@@ -60,15 +62,15 @@ param_dist = {"objective": ["reg:linear"],
              }
 
 # run randomized search
-n_iter_search = 40
-folds = cv.KFold(n=len(y_train), n_folds=2, shuffle=True, random_state=42)
+n_iter_search = 30
+folds = cv.KFold(n=len(y_train), n_folds=N_FOLDS, shuffle=True, random_state=42)
 random_search = RandomizedSearchCV(model,
                                    param_distributions=param_dist,
                                    n_iter=n_iter_search,
                                    cv=folds,
                                    n_jobs=-1,
                                    scoring=utils.rmspe_scorer,
-                                   iid=False,
+                                   iid=True,
                                    error_score=-99.99,
                                    verbose=1
                                   )
